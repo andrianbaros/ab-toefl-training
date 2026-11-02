@@ -23,6 +23,7 @@ export default function ExaminerPage() {
   const [syncEnabled, setSyncEnabled] = useState(true);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [showAnswersAndOptions, setShowAnswersAndOptions] = useState(true);
 
   // Group listening items for Examiner
   const scriptItems: ExaminerScriptItem[] = React.useMemo(() => {
@@ -294,36 +295,116 @@ export default function ExaminerPage() {
             )}
           </div>
 
-          {/* Spoken Questions for Candidate (Without answer keys) */}
-          <div className="rounded-xl bg-slate-900 border border-slate-800 p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span className="text-xs font-mono font-bold uppercase text-amber-400">
-                Questions to Read
-              </span>
-              <span className="text-[10px] font-mono text-rose-400">
-                [Answer Keys Protected]
-              </span>
+          {/* Spoken Questions for Candidate & Examiner Answer Key / Options */}
+          <div className="rounded-xl bg-slate-900 border border-slate-800 p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase text-amber-400">
+                  Questions to Read & Options
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-900">
+                  Examiner Key View
+                </span>
+              </div>
+              <button
+                onClick={() => setShowAnswersAndOptions(!showAnswersAndOptions)}
+                className="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors w-fit"
+              >
+                {showAnswersAndOptions ? 'Hide Options & Answers' : 'Show Options & Answers'}
+              </button>
             </div>
 
-            <div className="space-y-2.5">
-              {currentItem.associatedQuestions.map((q, idx) => (
-                <div
-                  key={q.id}
-                  className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-3"
-                >
-                  <span className="font-mono font-bold text-xs text-amber-400 mt-0.5">
-                    Q{currentItem.questionNumbers[idx] || idx + 1}:
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-100 font-sans">
-                      "{q.questionSpokenText || q.prompt}"
-                    </p>
-                    <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-                      (Pause 12s after reading prompt)
-                    </p>
+            <div className="space-y-4">
+              {currentItem.associatedQuestions.map((q, idx) => {
+                const questionNumber = currentItem.questionNumbers[idx] || idx + 1;
+                return (
+                  <div
+                    key={q.id}
+                    className="p-4 rounded-lg bg-slate-950 border border-slate-800 space-y-3"
+                  >
+                    {/* Spoken Question Prompt */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className="font-mono font-bold text-xs text-amber-400 px-2 py-0.5 rounded bg-amber-950/70 border border-amber-900 shrink-0">
+                          Q{questionNumber}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-100 font-sans">
+                            "{q.questionSpokenText || q.prompt}"
+                          </p>
+                          <p className="text-[11px] font-mono text-slate-500 mt-0.5">
+                            (Read aloud to candidate • Pause 12s after prompt)
+                          </p>
+                        </div>
+                      </div>
+
+                      {showAnswersAndOptions && (
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 shrink-0">
+                          KEY: ({q.correctAnswer})
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Options and Answer Display for Examiner */}
+                    {showAnswersAndOptions && (
+                      <div className="pt-3 border-t border-slate-800/80 space-y-2.5">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                          <span>Candidate Options:</span>
+                          <span className="text-emerald-400 font-bold">
+                            Correct: Option ({q.correctAnswer})
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {q.options.map((opt) => {
+                            const isCorrect = opt.label === q.correctAnswer;
+                            return (
+                              <div
+                                key={opt.label}
+                                className={`p-2.5 rounded-md border text-xs flex items-start gap-2.5 transition-colors ${
+                                  isCorrect
+                                    ? 'bg-emerald-950/50 border-emerald-500/70 text-emerald-100 ring-1 ring-emerald-500/40'
+                                    : 'bg-slate-900 border-slate-800 text-slate-300'
+                                }`}
+                              >
+                                <span
+                                  className={`font-mono font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0 ${
+                                    isCorrect
+                                      ? 'bg-emerald-500 text-slate-950 font-black'
+                                      : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                  }`}
+                                >
+                                  ({opt.label})
+                                </span>
+                                <span className="leading-snug">
+                                  {opt.text}
+                                  {isCorrect && (
+                                    <span className="ml-1.5 text-[10px] font-mono font-bold text-emerald-400 block sm:inline">
+                                      ✓ Correct Answer
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Explanation & Rationale */}
+                        {q.explanation && (
+                          <div className="mt-2 p-2.5 rounded bg-slate-900/80 border border-slate-800 text-xs">
+                            <span className="font-mono text-[10px] font-bold uppercase text-amber-400 tracking-wider">
+                              Examiner Notes & Explanation:
+                            </span>
+                            <p className="text-slate-300 mt-0.5 leading-relaxed font-sans text-[11px]">
+                              {q.explanation}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
