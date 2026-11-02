@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { TestSession, Question } from '@/types';
+import { TestSession, Question, UserSettings } from '@/types';
 import { getActiveSession, saveActiveSession, getStoredSettings } from '@/lib/storage';
 import { getQuestionById } from '@/data/questionBank';
 import { READING_PASSAGES } from '@/data/readingPassages';
 import { gradeTestSession } from '@/lib/evaluation';
 import { formatTime } from '@/lib/utils';
 import { syncChannel } from '@/lib/broadcast';
+import ListeningPlayer from '@/components/listening/ListeningPlayer';
 
 function renderUnderlinedSentence(sentence: string) {
   const regex = /(\([A-D]\)\[[^\]]+\])/g;
@@ -44,9 +45,11 @@ export default function ActiveTestPage() {
   const [showNavigatorDrawer, setShowNavigatorDrawer] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [examinerSyncState, setExaminerSyncState] = useState<string | null>(null);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    setSettings(getStoredSettings());
     const active = getActiveSession();
     if (!active || active.questionIds.length === 0) {
       router.replace('/practice');
@@ -362,8 +365,24 @@ export default function ActiveTestPage() {
               </button>
             </div>
 
-            {/* Error Recognition Sentence */}
-            {currentQuestion.underlinedSentence ? (
+            {/* Listening Audio Player (When in Listening Section) */}
+            {currentQuestion.section === 'listening' ? (
+              <div className="space-y-4">
+                <ListeningPlayer
+                  question={currentQuestion}
+                  autoPlay={settings?.autoPlayListeningAudio ?? false}
+                  showTranscriptToggle={session.mode === 'practice'}
+                />
+
+                <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-white">
+                  <span className="text-[10px] font-mono font-bold uppercase text-brand-600 dark:text-brand-400 block mb-1">
+                    Spoken Question Prompt:
+                  </span>
+                  "{currentQuestion.questionSpokenText || currentQuestion.prompt}"
+                </div>
+              </div>
+            ) : currentQuestion.underlinedSentence ? (
+              /* Error Recognition Sentence */
               <div className="space-y-3">
                 <p className="text-xs text-slate-500">
                   {currentQuestion.prompt}
@@ -373,6 +392,7 @@ export default function ActiveTestPage() {
                 </div>
               </div>
             ) : (
+              /* Standard Prompt */
               <div className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white leading-relaxed">
                 {currentQuestion.prompt}
               </div>

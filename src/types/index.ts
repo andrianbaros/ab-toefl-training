@@ -125,6 +125,7 @@ export interface UserSettings {
   autoNextQuestion: boolean;
   soundEnabled: boolean;
   syncWithExaminer: boolean;
+  autoPlayListeningAudio?: boolean;
 }
 
 export interface ExaminerSyncMessage {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { LISTENING_QUESTIONS } from '@/data/listeningQuestions';
 import { Question } from '@/types';
 import { syncChannel } from '@/lib/broadcast';
+import { ttsService } from '@/lib/ttsService';
 
 interface ExaminerScriptItem {
   id: string;
@@ -24,6 +25,7 @@ export default function ExaminerPage() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [showAnswersAndOptions, setShowAnswersAndOptions] = useState(true);
+  const [isTtsSpeaking, setIsTtsSpeaking] = useState(false);
 
   // Group listening items for Examiner
   const scriptItems: ExaminerScriptItem[] = React.useMemo(() => {
@@ -138,6 +140,32 @@ export default function ExaminerPage() {
     }
     return () => clearInterval(interval);
   }, [isTimerRunning]);
+
+  // Stop TTS on index change or unmount
+  useEffect(() => {
+    ttsService.stop();
+    setIsTtsSpeaking(false);
+    return () => {
+      ttsService.stop();
+    };
+  }, [currentIndex]);
+
+  const handleToggleTts = async () => {
+    if (isTtsSpeaking) {
+      ttsService.stop();
+      setIsTtsSpeaking(false);
+    } else {
+      setIsTtsSpeaking(true);
+      const lines =
+        currentItem.dialogue && currentItem.dialogue.length > 0
+          ? currentItem.dialogue
+          : [{ speaker: 'Narrator', text: currentItem.audioScript }];
+
+      await ttsService.playDialogue(lines, {
+        onEnd: () => setIsTtsSpeaking(false),
+      });
+    }
+  };
 
   const handleNext = () => {
     if (currentIndex < scriptItems.length - 1) {
@@ -269,9 +297,21 @@ export default function ExaminerPage() {
               <span className="text-xs font-mono font-bold uppercase text-slate-400">
                 Dialogue Script (Read Aloud)
               </span>
-              <span className="text-[10px] font-mono text-slate-500">
-                Candidate Screen: Options Only
-              </span>
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={handleToggleTts}
+                  className={`text-xs font-mono px-3 py-1 rounded-md transition-colors flex items-center gap-1.5 ${
+                    isTtsSpeaking
+                      ? 'bg-rose-950 text-rose-300 border border-rose-800 font-bold'
+                      : 'bg-brand-950 hover:bg-brand-900 text-brand-300 border border-brand-800'
+                  }`}
+                >
+                  <span>{isTtsSpeaking ? '■ Stop TTS' : '▶ Speak via Natural TTS'}</span>
+                </button>
+                <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">
+                  Candidate Screen: Options Only
+                </span>
+              </div>
             </div>
 
             {/* Structured Dialogue Lines */}

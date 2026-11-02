@@ -6,12 +6,34 @@ import Link from 'next/link';
 import { TestMode } from '@/types';
 import { createSectionSession } from '@/data/questionBank';
 import { saveActiveSession } from '@/lib/storage';
+import { ttsService } from '@/lib/ttsService';
 
 export default function ListeningPracticePage() {
   const router = useRouter();
   const [selectedParts, setSelectedParts] = useState<string[]>(['part_a', 'part_b', 'part_c']);
   const [mode, setMode] = useState<TestMode>('timed');
   const [questionCount, setQuestionCount] = useState<number>(50);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+
+  const handleTestTts = async () => {
+    if (isPreviewPlaying) {
+      ttsService.stop();
+      setIsPreviewPlaying(false);
+      return;
+    }
+
+    setIsPreviewPlaying(true);
+    await ttsService.playDialogue(
+      [
+        { speaker: 'Man', text: 'Excuse me, do you know when the campus bookstore closes today?' },
+        { speaker: 'Woman', text: "I think it stays open until seven o'clock on weekdays." },
+        { speaker: 'Narrator', text: 'What does the woman tell the man?' },
+      ],
+      {
+        onEnd: () => setIsPreviewPlaying(false),
+      }
+    );
+  };
 
   const togglePart = (part: string) => {
     if (selectedParts.includes(part)) {
@@ -54,14 +76,50 @@ export default function ListeningPracticePage() {
         </Link>
       </div>
 
-      {/* Manual Protocol Notice */}
-      <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/70 dark:bg-amber-950/20 text-xs text-amber-950 dark:text-amber-200 space-y-1">
-        <span className="font-bold uppercase font-mono tracking-wider">
-          Mekanisme Listening Manual:
-        </span>
-        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-          Pada layar peserta, naskah audio tidak ditampilkan. Penguji membuka tab <strong>Examiner Mode</strong> di jendela terpisah untuk membaca naskah secara manual tanpa memperlihatkan kunci jawaban kepada peserta.
-        </p>
+      {/* Dual Audio Options Notice & TTS Preview Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Option 1: Built-in Natural Neural TTS */}
+        <div className="p-4 rounded-xl border border-brand-200 dark:border-brand-900 bg-brand-50/60 dark:bg-brand-950/20 text-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-bold uppercase font-mono tracking-wider text-brand-700 dark:text-brand-300">
+              1. Text-to-Speech (Neural Voice):
+            </span>
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 font-bold">
+              RECOMMENDED
+            </span>
+          </div>
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Sistem memutar percakapan secara otomatis dengan suara multi-speaker (Man, Woman, Narrator) berbasis teknologi Natural Voice browser.
+          </p>
+          <button
+            onClick={handleTestTts}
+            className={`px-3 py-1.5 rounded-md font-mono text-xs font-semibold border transition-colors flex items-center gap-2 ${
+              isPreviewPlaying
+                ? 'bg-rose-600 text-white border-rose-600'
+                : 'bg-white dark:bg-slate-900 border-brand-300 dark:border-brand-800 text-brand-700 dark:text-brand-300 hover:bg-brand-50'
+            }`}
+          >
+            <span>{isPreviewPlaying ? '■ Stop Audio Test' : '▶ Test Voice Preview'}</span>
+          </button>
+        </div>
+
+        {/* Option 2: Manual Human Examiner Mode */}
+        <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/60 dark:bg-amber-950/20 text-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-bold uppercase font-mono tracking-wider text-amber-800 dark:text-amber-300">
+              2. Manual Examiner Mode:
+            </span>
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 font-bold">
+              PROCTOR SYNC
+            </span>
+          </div>
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Penguji membuka tab <Link href="/examiner" target="_blank" className="underline font-semibold">Examiner Mode</Link> di jendela terpisah untuk membaca naskah secara langsung dengan stopwatch dan kunci jawaban.
+          </p>
+          <div className="text-[11px] font-mono text-amber-700 dark:text-amber-400">
+            • Tab syncing via BroadcastChannel
+          </div>
+        </div>
       </div>
 
       {/* Configuration Card */}

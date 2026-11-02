@@ -220,6 +220,23 @@ export default function SettingsPage() {
                 className="w-4 h-4 accent-brand-600"
               />
             </label>
+
+            <label className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
+              <div>
+                <div className="font-bold text-xs text-slate-900 dark:text-white">
+                  Auto-Play Listening Audio (Natural Neural TTS)
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Otomatis memutar naskah audio saat nomor soal listening dibuka.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.autoPlayListeningAudio || false}
+                onChange={(e) => setSettings({ ...settings, autoPlayListeningAudio: e.target.checked })}
+                className="w-4 h-4 accent-brand-600"
+              />
+            </label>
           </div>
         </div>
 

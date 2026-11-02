@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getTestResultById, saveActiveSession, saveBookmark, getBookmarks } from '@/lib/storage';
 import { createRetrySession } from '@/data/questionBank';
 import { TestResult, Question } from '@/types';
+import ListeningPlayer from '@/components/listening/ListeningPlayer';
 
 function renderUnderlinedSentence(sentence: string) {
   const regex = /(\([A-D]\)\[[^\]]+\])/g;
@@ -213,8 +214,18 @@ export default function AnswerReviewPage() {
                   </div>
                 </div>
 
-                {/* Question Prompt */}
-                {q.underlinedSentence ? (
+                {/* Question Prompt or Audio Player for Listening */}
+                {q.section === 'listening' ? (
+                  <div className="space-y-3">
+                    <ListeningPlayer question={q} showTranscriptToggle={true} />
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-white">
+                      <span className="text-[10px] font-mono font-bold uppercase text-brand-600 dark:text-brand-400 block mb-1">
+                        Spoken Question:
+                      </span>
+                      "{q.questionSpokenText || q.prompt}"
+                    </div>
+                  </div>
+                ) : q.underlinedSentence ? (
                   <div className="space-y-2">
                     <p className="text-xs text-slate-500">{q.prompt}</p>
                     <div className="p-3.5 rounded bg-slate-50 dark:bg-slate-950 font-serif text-sm sm:text-base text-slate-900 dark:text-slate-100 leading-relaxed border border-slate-200 dark:border-slate-800">

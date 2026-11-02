@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   autoNextQuestion: false,
   soundEnabled: true,
   syncWithExaminer: true,
+  autoPlayListeningAudio: false,
 };
 
 // Safe localStorage access
